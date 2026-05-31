@@ -2,562 +2,271 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#000;color:#00ff41;font-family:'Share Tech Mono',monospace;min-height:100vh;overflow-x:hidden}
+#bg-canvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;opacity:0.13}
+.wrap{position:relative;z-index:10;max-width:860px;margin:0 auto;padding:2rem 1.2rem 5rem}
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+/* HUD corners */
+.hud-box{position:relative;border:1px solid #00ff4130;background:#00090055;backdrop-filter:blur(2px)}
+.hud-box::before,.hud-box::after{content:'';position:absolute;width:14px;height:14px}
+.hud-box::before{top:-1px;left:-1px;border-top:2px solid #00ff41;border-left:2px solid #00ff41}
+.hud-box::after{bottom:-1px;right:-1px;border-bottom:2px solid #00ff41;border-right:2px solid #00ff41}
+.hud-box .c-tr{position:absolute;top:-1px;right:-1px;width:14px;height:14px;border-top:2px solid #00ff41;border-right:2px solid #00ff41}
+.hud-box .c-bl{position:absolute;bottom:-1px;left:-1px;width:14px;height:14px;border-bottom:2px solid #00ff41;border-left:2px solid #00ff41}
 
-  body {
-    background: #000;
-    color: #00ff41;
-    font-family: 'Share Tech Mono', monospace;
-    min-height: 100vh;
-    overflow-x: hidden;
-  }
+/* Top bar */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:10px 18px;margin-bottom:1.5rem;border:1px solid #00ff4125;background:#00ff4108}
+.topbar-left{font-size:10px;letter-spacing:3px;color:#00ff4166}
+.topbar-right{display:flex;gap:14px;font-size:10px;color:#00ff4155;letter-spacing:1px}
+.topbar-right span{display:flex;align-items:center;gap:5px}
+.live-dot{width:6px;height:6px;background:#00ff41;border-radius:50%;animation:blink 1.1s step-end infinite;box-shadow:0 0 6px #00ff41}
+.warn-dot{width:6px;height:6px;background:#ff0044;border-radius:50%;animation:blink 0.8s step-end infinite;box-shadow:0 0 6px #ff0044}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
 
-  #matrix-bg {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    z-index: 0;
-    opacity: 0.18;
-  }
+/* Hero */
+.hero{display:grid;grid-template-columns:auto 1fr;gap:2rem;padding:2rem;margin-bottom:1.5rem;position:relative;overflow:hidden}
+.hero-scan{position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,#00ff4166,transparent);animation:hscan 3s linear infinite}
+@keyframes hscan{0%{top:0}100%{top:100%}}
 
-  .portfolio-wrap {
-    position: relative;
-    z-index: 10;
-    max-width: 900px;
-    margin: 0 auto;
-    padding: 2rem 1.5rem 4rem;
-  }
+.avi-wrap{position:relative;width:120px;height:120px;flex-shrink:0}
+.avi-ring{position:absolute;inset:0;border:1px solid #00ff4155;border-radius:50%;animation:ring-spin 8s linear infinite}
+.avi-ring2{position:absolute;inset:6px;border:1px dashed #00ff4133;border-radius:50%;animation:ring-spin 5s linear infinite reverse}
+.avi-inner{position:absolute;inset:14px;background:#001a00;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid #00ff41;overflow:hidden}
+.avi-inner::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,#00ff4122,transparent 60%)}
+.avi-hex{font-family:'Orbitron',sans-serif;font-size:1.1rem;font-weight:900;color:#00ff41;letter-spacing:1px;text-shadow:0 0 12px #00ff41;position:relative;z-index:1}
+@keyframes ring-spin{to{transform:rotate(360deg)}}
+.avi-corner{position:absolute;width:10px;height:10px}
+.avi-corner.tl{top:0;left:0;border-top:2px solid #00ff41;border-left:2px solid #00ff41}
+.avi-corner.tr{top:0;right:0;border-top:2px solid #00ff41;border-right:2px solid #00ff41}
+.avi-corner.bl{bottom:0;left:0;border-bottom:2px solid #00ff41;border-left:2px solid #00ff41}
+.avi-corner.br{bottom:0;right:0;border-bottom:2px solid #00ff41;border-right:2px solid #00ff41}
 
-  .terminal-bar {
-    display: flex;
-    align-items: center;
-    gap: 7px;
-    background: #0d0d0d;
-    border: 1px solid #00ff4133;
-    border-bottom: none;
-    border-radius: 8px 8px 0 0;
-    padding: 10px 14px;
-    font-size: 12px;
-    color: #555;
-  }
-  .dot { width: 12px; height: 12px; border-radius: 50%; }
-  .dot-r { background: #ff5f57; }
-  .dot-y { background: #febc2e; }
-  .dot-g { background: #28c840; }
-  .term-title { margin-left: 8px; color: #00ff4177; letter-spacing: 2px; font-size: 11px; }
+.hero-info{display:flex;flex-direction:column;justify-content:center;gap:0.5rem}
+.callsign{font-family:'Orbitron',sans-serif;font-size:2.6rem;font-weight:900;color:#00ff41;letter-spacing:6px;line-height:1;text-shadow:0 0 20px #00ff4166,0 0 40px #00ff4133;position:relative;display:inline-block}
+.callsign::after{content:attr(data-text);position:absolute;top:0;left:0;color:#ff0044;opacity:0;animation:glitch 5s infinite}
+@keyframes glitch{
+  0%,88%,100%{opacity:0;transform:none}
+  89%{opacity:.8;transform:translateX(-4px);clip-path:inset(20% 0 50% 0)}
+  91%{opacity:.8;transform:translateX(4px);clip-path:inset(50% 0 20% 0)}
+  93%{opacity:.8;transform:translateX(-2px);clip-path:inset(35% 0 35% 0)}
+  95%{opacity:0}
+}
+.fullname{font-size:.9rem;color:#88ff88;letter-spacing:4px}
+.role-badge{display:inline-flex;align-items:center;gap:8px;padding:5px 14px;border:1px solid #ff004455;background:#ff00441a;color:#ff6688;font-size:.72rem;letter-spacing:2px;width:fit-content}
+.typebox{font-size:.78rem;color:#00ff4177;min-height:1.3em;letter-spacing:1px}
+.socials{display:flex;gap:8px;flex-wrap:wrap;margin-top:.4rem}
+.soc{display:inline-flex;align-items:center;gap:6px;padding:5px 14px;border:1px solid #00ff4144;color:#00ff41;font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:1px;text-decoration:none;cursor:pointer;transition:all .18s;position:relative;overflow:hidden;background:transparent}
+.soc::before{content:'';position:absolute;inset:0;background:#00ff41;transform:scaleX(0);transform-origin:left;transition:transform .18s ease;z-index:0}
+.soc:hover::before{transform:scaleX(1)}
+.soc:hover{color:#000}
+.soc span{position:relative;z-index:1}
 
-  .terminal-body {
-    background: #050f05;
-    border: 1px solid #00ff4133;
-    border-radius: 0 0 8px 8px;
-    padding: 2rem 2.5rem 2.5rem;
-    position: relative;
-    overflow: hidden;
-  }
+/* Stats */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;margin-bottom:1.5rem;background:#00ff4118}
+.stat{padding:1rem;background:#00050a;text-align:center;position:relative;overflow:hidden;cursor:default;transition:background .2s}
+.stat:hover{background:#001a08}
+.stat::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:#00ff41;transform:scaleX(0);transition:transform .3s;transform-origin:center}
+.stat:hover::after{transform:scaleX(1)}
+.stat-n{font-family:'Orbitron',sans-serif;font-size:2rem;font-weight:700;color:#00ff41;text-shadow:0 0 14px #00ff4166;letter-spacing:2px}
+.stat-l{font-size:9px;color:#00ff4155;letter-spacing:3px;margin-top:3px}
 
-  .scan-line {
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 2px;
-    background: linear-gradient(90deg, transparent, #00ff4144, transparent);
-    animation: scan 4s linear infinite;
-    pointer-events: none;
-  }
+/* Skill grid */
+.section-head{font-size:9px;letter-spacing:5px;color:#00ff4155;margin-bottom:.8rem;display:flex;align-items:center;gap:10px}
+.section-head::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,#00ff4133,transparent)}
 
-  @keyframes scan {
-    0% { top: 0; }
-    100% { top: 100%; }
-  }
+.skill-grid{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:1.5rem}
+.sk{padding:5px 13px;border:1px solid #00ff4130;font-size:10px;letter-spacing:2px;color:#77ee99;background:#00ff410a;cursor:default;transition:all .2s;position:relative}
+.sk:hover{border-color:#00ff41;color:#00ff41;background:#00ff4120;text-shadow:0 0 8px #00ff41}
+.sk.hot{border-color:#ff004455;color:#ff6688;background:#ff00441a}
+.sk.hot:hover{border-color:#ff0044;color:#ff0044;background:#ff004422;text-shadow:0 0 8px #ff0044}
 
-  .prompt-line {
-    color: #00ff4166;
-    font-size: 12px;
-    margin-bottom: 1.5rem;
-    letter-spacing: 1px;
-  }
-  .prompt-line span { color: #00ff41; }
+/* Terminal log */
+.term-log{padding:1rem 1.4rem;font-size:11px;line-height:2;position:relative;overflow:hidden;margin-bottom:1.5rem}
+.log-line{opacity:0;animation:logfade .3s forwards}
+@keyframes logfade{to{opacity:1}}
+.ok{color:#00ff41}.warn{color:#febc2e}.err{color:#ff4455}.dim{color:#00ff4155}
+.cur{display:inline-block;width:7px;height:12px;background:#00ff41;vertical-align:middle;animation:cblink 1s step-end infinite;margin-left:2px}
+@keyframes cblink{50%{opacity:0}}
 
-  .hero-section {
-    display: flex;
-    gap: 2.5rem;
-    align-items: flex-start;
-    margin-bottom: 2.5rem;
-  }
+/* Progress bars */
+.bars-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1.5rem}
+.bar-item{}
+.bar-label{display:flex;justify-content:space-between;font-size:10px;color:#00ff4188;letter-spacing:2px;margin-bottom:4px}
+.bar-track{height:4px;background:#00ff4118;position:relative;overflow:hidden}
+.bar-fill{height:100%;background:#00ff41;box-shadow:0 0 8px #00ff41;transform:scaleX(0);transform-origin:left;animation:barfill 1.5s ease forwards}
+.bar-fill.red{background:#ff0044;box-shadow:0 0 8px #ff0044}
+.bar-fill.amber{background:#febc2e;box-shadow:0 0 8px #febc2e}
+@keyframes barfill{to{transform:scaleX(1)}}
 
-  .avatar-frame {
-    flex-shrink: 0;
-    position: relative;
-    width: 130px;
-    height: 130px;
-  }
+/* Bottom strip */
+.bottom-strip{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;border:1px solid #00ff4118;background:#00ff4106;font-size:9px;color:#00ff4144;letter-spacing:2px}
 
-  .avatar-frame::before {
-    content: '';
-    position: absolute;
-    inset: -4px;
-    border: 2px solid #00ff41;
-    border-radius: 4px;
-    animation: border-pulse 2s ease-in-out infinite;
-  }
-
-  .avatar-frame::after {
-    content: '';
-    position: absolute;
-    inset: -8px;
-    border: 1px solid #00ff4144;
-    border-radius: 6px;
-    animation: border-pulse 2s ease-in-out infinite 1s;
-  }
-
-  @keyframes border-pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.3; }
-  }
-
-  .avatar-inner {
-    width: 100%;
-    height: 100%;
-    background: #0a1a0a;
-    border-radius: 2px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: 'Orbitron', sans-serif;
-    font-size: 28px;
-    font-weight: 900;
-    color: #00ff41;
-    letter-spacing: 2px;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .avatar-inner::before {
-    content: '';
-    position: absolute;
-    top: 0; left: -100%;
-    width: 100%; height: 100%;
-    background: linear-gradient(90deg, transparent, #00ff4122, transparent);
-    animation: avatar-sweep 3s ease-in-out infinite;
-  }
-
-  @keyframes avatar-sweep {
-    0% { left: -100%; }
-    60%, 100% { left: 100%; }
-  }
-
-  .hero-info { flex: 1; }
-
-  .handle {
-    font-family: 'Orbitron', sans-serif;
-    font-size: 2.2rem;
-    font-weight: 900;
-    color: #00ff41;
-    letter-spacing: 4px;
-    line-height: 1;
-    margin-bottom: 0.3rem;
-    position: relative;
-    display: inline-block;
-  }
-
-  .handle::after {
-    content: attr(data-text);
-    position: absolute;
-    top: 0; left: 0;
-    color: #ff0044;
-    clip-path: inset(30% 0 40% 0);
-    animation: glitch-1 3.5s infinite;
-    opacity: 0.7;
-  }
-
-  @keyframes glitch-1 {
-    0%, 90%, 100% { transform: translateX(0); opacity: 0; }
-    91% { transform: translateX(-3px); opacity: 0.7; clip-path: inset(10% 0 60% 0); }
-    93% { transform: translateX(3px); opacity: 0.7; clip-path: inset(60% 0 10% 0); }
-    95% { transform: translateX(-2px); opacity: 0.7; clip-path: inset(30% 0 40% 0); }
-    97% { transform: translateX(0); opacity: 0; }
-  }
-
-  .realname {
-    color: #88ff88;
-    font-size: 1rem;
-    letter-spacing: 3px;
-    margin-bottom: 0.6rem;
-  }
-
-  .role-tag {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    color: #ff0044;
-    font-size: 0.82rem;
-    letter-spacing: 2px;
-    border: 1px solid #ff004433;
-    padding: 4px 12px;
-    border-radius: 2px;
-    background: #ff00441a;
-    margin-bottom: 1.2rem;
-  }
-  .role-dot { width: 6px; height: 6px; background: #ff0044; border-radius: 50%; animation: blink 1.2s step-end infinite; }
-  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
-
-  .type-line {
-    color: #00ff4188;
-    font-size: 0.78rem;
-    letter-spacing: 1px;
-    margin-bottom: 0.2rem;
-    min-height: 1.2em;
-  }
-
-  .social-links {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-    margin-top: 1rem;
-  }
-
-  .soc-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 14px;
-    border: 1px solid #00ff4144;
-    border-radius: 2px;
-    background: transparent;
-    color: #00ff41;
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 12px;
-    letter-spacing: 1px;
-    text-decoration: none;
-    cursor: pointer;
-    transition: all 0.2s;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .soc-btn::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: #00ff41;
-    transform: translateX(-101%);
-    transition: transform 0.2s ease;
-    z-index: 0;
-  }
-
-  .soc-btn:hover::before { transform: translateX(0); }
-  .soc-btn:hover { color: #000; border-color: #00ff41; }
-  .soc-btn span { position: relative; z-index: 1; }
-
-  .divider {
-    border: none;
-    border-top: 1px solid #00ff4122;
-    margin: 1.8rem 0;
-  }
-
-  .section-label {
-    color: #00ff4166;
-    font-size: 10px;
-    letter-spacing: 4px;
-    margin-bottom: 1rem;
-    text-transform: uppercase;
-  }
-
-  .stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 1px;
-    background: #00ff4111;
-    border: 1px solid #00ff4122;
-    border-radius: 4px;
-    overflow: hidden;
-    margin-bottom: 2rem;
-  }
-
-  .stat-box {
-    padding: 1rem 1.2rem;
-    background: #050f05;
-    text-align: center;
-    cursor: pointer;
-    transition: background 0.2s;
-  }
-  .stat-box:hover { background: #0a200a; }
-  .stat-val {
-    font-family: 'Orbitron', sans-serif;
-    font-size: 1.6rem;
-    font-weight: 700;
-    color: #00ff41;
-    letter-spacing: 2px;
-    line-height: 1.1;
-  }
-  .stat-lbl {
-    font-size: 10px;
-    color: #00ff4155;
-    letter-spacing: 2px;
-    margin-top: 4px;
-  }
-
-  .skills-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-bottom: 2rem;
-  }
-
-  .skill-chip {
-    padding: 5px 12px;
-    border: 1px solid #00ff4133;
-    border-radius: 2px;
-    font-size: 11px;
-    letter-spacing: 1.5px;
-    color: #88ff88;
-    background: #00ff410a;
-    transition: all 0.2s;
-    cursor: default;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .skill-chip:hover {
-    border-color: #00ff41;
-    color: #00ff41;
-    background: #00ff4122;
-  }
-
-  .activity-log {
-    background: #000;
-    border: 1px solid #00ff4122;
-    border-radius: 4px;
-    padding: 1rem 1.2rem;
-    font-size: 12px;
-    color: #00ff4188;
-    line-height: 2;
-    position: relative;
-  }
-
-  .log-entry {
-    opacity: 0;
-    animation: fade-in 0.4s forwards;
-  }
-
-  @keyframes fade-in {
-    to { opacity: 1; }
-  }
-
-  .log-ok { color: #00ff41; }
-  .log-warn { color: #febc2e; }
-  .log-flag { color: #ff0044; }
-
-  .cursor {
-    display: inline-block;
-    width: 8px;
-    height: 14px;
-    background: #00ff41;
-    vertical-align: middle;
-    animation: cursor-blink 1s step-end infinite;
-    margin-left: 2px;
-  }
-  @keyframes cursor-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
-
-  .thm-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    border: 1px solid #00ff4133;
-    border-radius: 2px;
-    padding: 8px 16px;
-    font-size: 11px;
-    color: #00ff41aa;
-    letter-spacing: 1px;
-    margin-top: 0.5rem;
-    background: #00ff4108;
-  }
-
-  .thm-rank {
-    font-family: 'Orbitron', sans-serif;
-    color: #00ff41;
-    font-size: 13px;
-    font-weight: 700;
-  }
-
-  @media (max-width: 600px) {
-    .hero-section { flex-direction: column; gap: 1.5rem; }
-    .handle { font-size: 1.5rem; }
-    .portfolio-wrap { padding: 1rem 1rem 3rem; }
-    .terminal-body { padding: 1.5rem 1.2rem; }
-  }
+@media(max-width:600px){
+  .hero{grid-template-columns:1fr;gap:1.2rem}
+  .stats-row{grid-template-columns:repeat(2,1fr)}
+  .bars-grid{grid-template-columns:1fr}
+  .callsign{font-size:1.8rem}
+}
 </style>
 </head>
 <body>
+<canvas id="bg-canvas"></canvas>
+<div class="wrap">
 
-<canvas id="matrix-bg"></canvas>
-
-<div class="portfolio-wrap">
-  <div class="terminal-bar">
-    <div class="dot dot-r"></div>
-    <div class="dot dot-y"></div>
-    <div class="dot dot-g"></div>
-    <span class="term-title">kali@N4V33NM — bash — 80×24</span>
+  <!-- top bar -->
+  <div class="topbar hud-box">
+    <div class="c-tr"></div><div class="c-bl"></div>
+    <div class="topbar-left">// OPERATOR PROFILE — CLEARANCE: RED TEAM</div>
+    <div class="topbar-right">
+      <span><span class="live-dot"></span>ONLINE</span>
+      <span><span class="warn-dot"></span>MONITORING</span>
+      <span id="clock">00:00:00</span>
+    </div>
   </div>
-  <div class="terminal-body">
-    <div class="scan-line"></div>
-    <div class="prompt-line"><span>root@kali</span>:~# cat /home/n4v33nm/profile.json</div>
 
-    <div class="hero-section">
-      <div class="avatar-frame">
-        <div class="avatar-inner">N4V</div>
-      </div>
-      <div class="hero-info">
-        <div class="handle" data-text="N4V33NM">N4V33NM</div>
-        <div class="realname">Naveen Kumar</div>
-        <div class="role-tag"><span class="role-dot"></span>Security Researcher &amp; Red Team Operator</div>
-        <div class="type-line" id="typeline"></div>
-        <div class="social-links">
-          <a class="soc-btn" href="https://github.com/N4V33NM" target="_blank"><span>[ github ]</span></a>
-          <a class="soc-btn" href="https://www.linkedin.com/in/naveen-kumar-886215278/" target="_blank"><span>[ linkedin ]</span></a>
-          <a class="soc-btn" href="https://www.instagram.com/cyber.naveen.info/" target="_blank"><span>[ instagram ]</span></a>
-        </div>
+  <!-- hero -->
+  <div class="hero hud-box" style="margin-bottom:1.5rem">
+    <div class="c-tr"></div><div class="c-bl"></div>
+    <div class="hero-scan"></div>
+    <div class="avi-wrap">
+      <div class="avi-ring"></div>
+      <div class="avi-ring2"></div>
+      <div class="avi-inner"><span class="avi-hex">N4V</span></div>
+      <div class="avi-corner tl"></div>
+      <div class="avi-corner tr"></div>
+      <div class="avi-corner bl"></div>
+      <div class="avi-corner br"></div>
+    </div>
+    <div class="hero-info">
+      <div class="callsign" data-text="N4V33NM">N4V33NM</div>
+      <div class="fullname">NAVEEN KUMAR</div>
+      <div class="role-badge"><span class="warn-dot"></span>SECURITY RESEARCHER &nbsp;/&nbsp; RED TEAM OPERATOR</div>
+      <div class="typebox" id="tbox"></div>
+      <div class="socials">
+        <a class="soc" href="https://github.com/N4V33NM" target="_blank"><span>⌥ GITHUB</span></a>
+        <a class="soc" href="https://www.linkedin.com/in/naveen-kumar-886215278/" target="_blank"><span>⌥ LINKEDIN</span></a>
+        <a class="soc" href="https://www.instagram.com/cyber.naveen.info/" target="_blank"><span>⌥ INSTAGRAM</span></a>
       </div>
     </div>
-
-    <hr class="divider">
-
-    <div class="section-label">// system stats</div>
-    <div class="stats-grid">
-      <div class="stat-box">
-        <div class="stat-val" id="s1">0</div>
-        <div class="stat-lbl">CVEs found</div>
-      </div>
-      <div class="stat-box">
-        <div class="stat-val" id="s2">0</div>
-        <div class="stat-lbl">CTF solves</div>
-      </div>
-      <div class="stat-box">
-        <div class="stat-val" id="s3">0</div>
-        <div class="stat-lbl">THM rooms</div>
-      </div>
-      <div class="stat-box">
-        <div class="stat-val" id="s4">0</div>
-        <div class="stat-lbl">Tools built</div>
-      </div>
-    </div>
-
-    <div class="section-label">// skills &amp; tools</div>
-    <div class="skills-row">
-      <div class="skill-chip">PENTESTING</div>
-      <div class="skill-chip">OSINT</div>
-      <div class="skill-chip">WEB APP SEC</div>
-      <div class="skill-chip">RED TEAMING</div>
-      <div class="skill-chip">RECON</div>
-      <div class="skill-chip">EXPLOIT DEV</div>
-      <div class="skill-chip">METASPLOIT</div>
-      <div class="skill-chip">BURPSUITE</div>
-      <div class="skill-chip">NMAP</div>
-      <div class="skill-chip">KALI LINUX</div>
-      <div class="skill-chip">PYTHON</div>
-      <div class="skill-chip">BASH</div>
-    </div>
-
-    <div class="section-label">// activity log</div>
-    <div class="activity-log" id="activity-log">
-      <div class="log-entry log-ok" style="animation-delay:0.2s">[INFO] Profile loaded successfully &nbsp;✓</div>
-      <div class="log-entry log-ok" style="animation-delay:0.6s">[INFO] TryHackMe account active — ID #802382</div>
-      <div class="log-entry log-warn" style="animation-delay:1s">[WARN] Scanning external network... standby</div>
-      <div class="log-entry log-flag" style="animation-delay:1.4s">[ALERT] Unauthorized access attempt blocked ✗</div>
-      <div class="log-entry log-ok" style="animation-delay:1.8s">[INFO] Red team operation: ACTIVE</div>
-      <div class="log-entry" style="animation-delay:2.2s; color:#00ff4155">[SYS]&nbsp; All systems nominal — awaiting instructions<span class="cursor"></span></div>
-    </div>
-
-    <div style="margin-top:1.5rem">
-      <div class="thm-badge">
-        <span>🏆</span>
-        <span class="thm-rank">TryHackMe</span>
-        <span>&nbsp;|&nbsp; Player #802382 — rank loading...</span>
-      </div>
-    </div>
-
   </div>
+
+  <!-- stats -->
+  <div class="section-head">// OPERATOR STATS</div>
+  <div class="stats-row hud-box" style="margin-bottom:1.5rem">
+    <div class="c-tr"></div><div class="c-bl"></div>
+    <div class="stat"><div class="stat-n" id="s1">0</div><div class="stat-l">CVEs FOUND</div></div>
+    <div class="stat"><div class="stat-n" id="s2">0</div><div class="stat-l">CTF SOLVES</div></div>
+    <div class="stat"><div class="stat-n" id="s3">0</div><div class="stat-l">THM ROOMS</div></div>
+    <div class="stat"><div class="stat-n" id="s4">0</div><div class="stat-l">TOOLS BUILT</div></div>
+  </div>
+
+  <!-- skill bars -->
+  <div class="section-head">// PROFICIENCY MATRIX</div>
+  <div class="bars-grid hud-box" style="padding:1.2rem;margin-bottom:1.5rem">
+    <div class="c-tr"></div><div class="c-bl"></div>
+    <div class="bar-item"><div class="bar-label"><span>WEB APP PENTEST</span><span>95%</span></div><div class="bar-track"><div class="bar-fill" style="width:95%;animation-delay:.2s"></div></div></div>
+    <div class="bar-item"><div class="bar-label"><span>OSINT & RECON</span><span>90%</span></div><div class="bar-track"><div class="bar-fill" style="width:90%;animation-delay:.35s"></div></div></div>
+    <div class="bar-item"><div class="bar-label"><span>EXPLOIT DEV</span><span>78%</span></div><div class="bar-track"><div class="bar-fill amber" style="width:78%;animation-delay:.5s"></div></div></div>
+    <div class="bar-item"><div class="bar-label"><span>RED TEAM OPS</span><span>85%</span></div><div class="bar-track"><div class="bar-fill" style="width:85%;animation-delay:.65s"></div></div></div>
+    <div class="bar-item"><div class="bar-label"><span>MALWARE ANALYSIS</span><span>70%</span></div><div class="bar-track"><div class="bar-fill amber" style="width:70%;animation-delay:.8s"></div></div></div>
+    <div class="bar-item"><div class="bar-label"><span>SOCIAL ENGINEERING</span><span>88%</span></div><div class="bar-track"><div class="bar-fill red" style="width:88%;animation-delay:.95s"></div></div></div>
+  </div>
+
+  <!-- skills -->
+  <div class="section-head">// TOOLS & ARSENAL</div>
+  <div class="skill-grid hud-box" style="padding:1.2rem;margin-bottom:1.5rem">
+    <div class="c-tr"></div><div class="c-bl"></div>
+    <div class="sk">METASPLOIT</div>
+    <div class="sk">BURP SUITE</div>
+    <div class="sk">NMAP</div>
+    <div class="sk">WIRESHARK</div>
+    <div class="sk">SQLMAP</div>
+    <div class="sk">HYDRA</div>
+    <div class="sk">GOBUSTER</div>
+    <div class="sk">NIKTO</div>
+    <div class="sk hot">KALI LINUX</div>
+    <div class="sk">PYTHON</div>
+    <div class="sk">BASH</div>
+    <div class="sk hot">OSINT FRAMEWORK</div>
+    <div class="sk">SHODAN</div>
+    <div class="sk hot">JOHN THE RIPPER</div>
+    <div class="sk">AIRCRACK-NG</div>
+    <div class="sk">BLOODHOUND</div>
+  </div>
+
+  <!-- terminal log -->
+  <div class="section-head">// SYSTEM LOG</div>
+  <div class="term-log hud-box">
+    <div class="c-tr"></div><div class="c-bl"></div>
+    <div class="log-line ok" style="animation-delay:.1s">[+] Operator profile authenticated &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[ OK ]</div>
+    <div class="log-line ok" style="animation-delay:.5s">[+] TryHackMe session active — UID #802382 &nbsp;&nbsp;[ OK ]</div>
+    <div class="log-line warn" style="animation-delay:.9s">[!] Network scan in progress — 192.168.x.x &nbsp;&nbsp;[ RUNNING ]</div>
+    <div class="log-line warn" style="animation-delay:1.3s">[!] VPN tunnel established — identity masked &nbsp;[ SECURE ]</div>
+    <div class="log-line err" style="animation-delay:1.7s">[✗] Intrusion attempt detected &amp; blocked &nbsp;&nbsp;&nbsp;&nbsp;[ BLOCKED ]</div>
+    <div class="log-line ok" style="animation-delay:2.1s">[+] Red team module loaded successfully &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[ OK ]</div>
+    <div class="log-line dim" style="animation-delay:2.5s">[ ] Awaiting next target assignment &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="cur"></span></div>
+  </div>
+
+  <!-- bottom strip -->
+  <div class="bottom-strip">
+    <span>N4V33NM // NAVEEN KUMAR</span>
+    <span>SECURITY RESEARCHER</span>
+    <span id="datestamp"></span>
+  </div>
+
 </div>
 
 <script>
-const canvas = document.getElementById('matrix-bg');
-const ctx = canvas.getContext('2d');
-function resizeCanvas() {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-}
-resizeCanvas();
-window.addEventListener('resize', resizeCanvas);
-
-const chars = '01アイウエオカキクケコサシスセソタチツテトナニ<>{}[]#$%&=ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
-const fontSize = 13;
-let cols, drops;
-
-function initMatrix() {
-  cols = Math.floor(canvas.width / fontSize);
-  drops = new Array(cols).fill(1);
-}
-initMatrix();
-window.addEventListener('resize', initMatrix);
-
-function drawMatrix() {
-  ctx.fillStyle = 'rgba(0,0,0,0.05)';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = '#00ff41';
-  ctx.font = fontSize + 'px Share Tech Mono, monospace';
-  for (let i = 0; i < drops.length; i++) {
-    const ch = chars[Math.floor(Math.random() * chars.length)];
-    ctx.fillText(ch, i * fontSize, drops[i] * fontSize);
-    if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
+/* matrix bg */
+const cv=document.getElementById('bg-canvas'),cx=cv.getContext('2d');
+function resize(){cv.width=window.innerWidth;cv.height=window.innerHeight}resize();
+window.addEventListener('resize',resize);
+const chars='01アイウカキクサシタチナニPENTESTRECONEXPLOIT<>#$@%&';
+let drops=[];
+function initD(){drops=Array(Math.floor(cv.width/14)).fill(1)}initD();
+window.addEventListener('resize',initD);
+setInterval(()=>{
+  cx.fillStyle='rgba(0,0,0,0.055)';cx.fillRect(0,0,cv.width,cv.height);
+  cx.font='13px Share Tech Mono,monospace';
+  drops.forEach((y,i)=>{
+    const c=chars[Math.floor(Math.random()*chars.length)];
+    const bright=Math.random()>.92;
+    cx.fillStyle=bright?'#88ffaa':'#00ff41';
+    cx.fillText(c,i*14,y*14);
+    if(y*14>cv.height&&Math.random()>.975)drops[i]=0;
     drops[i]++;
-  }
+  });
+},50);
+
+/* clock */
+function tick(){
+  const n=new Date();
+  const p=v=>String(v).padStart(2,'0');
+  document.getElementById('clock').textContent=p(n.getHours())+':'+p(n.getMinutes())+':'+p(n.getSeconds());
+  document.getElementById('datestamp').textContent=n.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}).toUpperCase();
+}tick();setInterval(tick,1000);
+
+/* typewriter */
+const lines=['> Ethical hacker. Offensive by nature, defensive by design.','> 0day hunter | CTF player | Bug bounty enthusiast','> Breaking things so defenders can build them stronger','> "The quieter you become, the more you can hear"'];
+let li=0,ci=0,del=false;
+const tb=document.getElementById('tbox');
+function tw(){
+  const t=lines[li];
+  if(!del){tb.textContent=t.slice(0,++ci);if(ci===t.length){del=true;setTimeout(tw,2200);return}}
+  else{tb.textContent=t.slice(0,--ci);if(ci===0){del=false;li=(li+1)%lines.length}}
+  setTimeout(tw,del?30:65);
+}tw();
+
+/* count up */
+function count(id,to,dur){
+  let s=null;const el=document.getElementById(id);
+  function f(ts){if(!s)s=ts;const p=Math.min((ts-s)/dur,1);el.textContent=Math.round(p*to);if(p<1)requestAnimationFrame(f);}
+  requestAnimationFrame(f);
 }
-setInterval(drawMatrix, 45);
-
-const typeTexts = [
-  '> Specializing in offensive security...',
-  '> Breaking things ethically since day 1...',
-  '> 0day hunter | CTF player | Red teamer...',
-  '> Finding what others miss...',
-];
-let ti = 0, ci = 0, deleting = false;
-const typel = document.getElementById('typeline');
-
-function typeWriter() {
-  const txt = typeTexts[ti];
-  if (!deleting) {
-    typel.textContent = txt.slice(0, ci+1);
-    ci++;
-    if (ci === txt.length) { deleting = true; setTimeout(typeWriter, 2000); return; }
-  } else {
-    typel.textContent = txt.slice(0, ci-1);
-    ci--;
-    if (ci === 0) { deleting = false; ti = (ti+1) % typeTexts.length; }
-  }
-  setTimeout(typeWriter, deleting ? 35 : 60);
-}
-typeWriter();
-
-function animCount(el, target, dur) {
-  let start = null;
-  function step(ts) {
-    if (!start) start = ts;
-    const p = Math.min((ts - start) / dur, 1);
-    el.textContent = Math.round(p * target);
-    if (p < 1) requestAnimationFrame(step);
-  }
-  requestAnimationFrame(step);
-}
-
-setTimeout(() => {
-  animCount(document.getElementById('s1'), 12, 1200);
-  animCount(document.getElementById('s2'), 47, 1400);
-  animCount(document.getElementById('s3'), 85, 1600);
-  animCount(document.getElementById('s4'), 9, 1000);
-}, 600);
+setTimeout(()=>{count('s1',12,1100);count('s2',47,1300);count('s3',85,1600);count('s4',9,900);},400);
 </script>
 </body>
 </html>
